@@ -12,7 +12,7 @@ import pytorch_lightning as pl
 # insert the project / script parent directory into the module search path
 PROJECT_DIR = os.path.join(sys.path[0], '..')
 sys.path.insert(1, PROJECT_DIR)
-import robust_e_nerf as ren
+import deblur_e_nerf as den
 
 STAGES = [ "train", "val", "test" ]
 METRICS_FILENAME = "metrics.yaml"
@@ -35,14 +35,14 @@ def main(args):
     torch.set_float32_matmul_precision(config.float32_matmul_precision)
     
     # instantiate the data module & model
-    datamodule = ren.data.datamodule.DataModule(
+    datamodule = den.data.datamodule.DataModule(
         config.seed,
         config.eval_target,
         config.trainer.num_nodes,
         config.trainer.gpus,
         **config.data
     )
-    model = ren.models.robust_e_nerf.RobustENeRF(
+    model = den.models.deblur_e_nerf.DeblurENeRF(
         config.git_head_hash,
         config.eval_target,
         config.trainer.num_nodes,
@@ -130,7 +130,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=("Training, validation & testing script of Robust e-NeRF")
+        description=("Training, validation & testing script of Deblur e-NeRF")
     )
     parser.add_argument(
         "stage", type=str, choices=STAGES,

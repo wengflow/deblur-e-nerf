@@ -13,7 +13,7 @@ from ..utils import autograd, modules, tensor_ops
 from ..data import datasets
 
 
-class RobustENeRF(pl.LightningModule):
+class DeblurENeRF(pl.LightningModule):
     INTRINSICS_KEY = "intrinsics"
     NUM_DIM = 3
     MAX_NUM_SAMPLES_PER_RAY = 1024

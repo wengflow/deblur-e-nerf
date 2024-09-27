@@ -3,24 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="description"
-        content="Robust e-NeRF directly and robustly reconstructs NeRFs from moving event cameras under various real-world conditions, especially from sparse and noisy events generated under non-uniform motion.">
-  <meta name="keywords" content="Robust e-NeRF, NeRF, Event Camera">
+        content="Deblur e-NeRF directly and effectively reconstructs blur-minimal NeRFs from motion-blurred events, generated under high-speed motion or low-light conditions.">
+  <meta name="keywords" content="Deblur e-NeRF, NeRF, Event Camera">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Robust e-NeRF: NeRF from Sparse & Noisy Events under Non-Uniform Motion</title>
+  <title>Deblur e-NeRF: NeRF from Motion-Blurred Events under High-speed or Low-light Conditions</title>
 
   <!-- OpenGraph -->
   <meta property="og:site_name" content="Weng Fei Low 刘永辉" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Robust e-NeRF: NeRF from Sparse & Noisy Events under Non-Uniform Motion" />
-  <meta property="og:url" content="https://wengflow.github.io/robust-e-nerf" />
-  <meta property="og:description" content="Robust e-NeRF directly and robustly reconstructs NeRFs from moving event cameras under various real-world conditions, especially from sparse and noisy events generated under non-uniform motion." />
+  <meta property="og:title" content="Deblur e-NeRF: NeRF from Motion-Blurred Events under High-speed or Low-light Conditions" />
+  <meta property="og:url" content="https://wengflow.github.io/deblur-e-nerf" />
+  <meta property="og:description" content="Deblur e-NeRF directly and effectively reconstructs blur-minimal NeRFs from motion-blurred events, generated under high-speed motion or low-light conditions." />
   <!-- <meta property="og:image" content="{%- if page.og_image -%}{{ page.og_image }}{%- else -%}{{ site.og_image }}{%- endif -%}" /> -->
   <meta property="og:locale" content="en" />
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Robust e-NeRF: NeRF from Sparse & Noisy Events under Non-Uniform Motion" />
-  <meta name="twitter:description" content="Robust e-NeRF directly and robustly reconstructs NeRFs from moving event cameras under various real-world conditions, especially from sparse and noisy events generated under non-uniform motion." />
+  <meta name="twitter:title" content="Deblur e-NeRF: NeRF from Motion-Blurred Events under High-speed or Low-light Conditions" />
+  <meta name="twitter:description" content="Deblur e-NeRF directly and effectively reconstructs blur-minimal NeRFs from motion-blurred events, generated under high-speed motion or low-light conditions." />
   <!-- <meta name="twitter:image" content="{%- if page.og_image -%}{{ page.og_image }}{%- else -%}{{ site.og_image }}{%- endif -%}" /> -->
   <meta name="twitter:site" content="@wengflow" />
   <meta name="twitter:creator" content="@wengflow" />
@@ -32,10 +32,10 @@
         "@type": "Person",
         "name": "Weng Fei Low"
       },
-      "url": "https://wengflow.github.io/robust-e-nerf",
+      "url": "https://wengflow.github.io/deblur-e-nerf",
       "@type": "WebSite",
-      "description": "Robust e-NeRF directly and robustly reconstructs NeRFs from moving event cameras under various real-world conditions, especially from sparse and noisy events generated under non-uniform motion.",
-      "headline": "Robust e-NeRF: NeRF from Sparse & Noisy Events under Non-Uniform Motion",
+      "description": "Deblur e-NeRF directly and effectively reconstructs blur-minimal NeRFs from motion-blurred events, generated under high-speed motion or low-light conditions.",
+      "headline": "Deblur e-NeRF: NeRF from Motion-Blurred Events under High-speed or Low-light Conditions",
       "name": "Weng Fei Low",
       "@context": "https://schema.org"
     }
@@ -137,7 +137,7 @@
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">Robust <i>e-</i>NeRF: NeRF from Sparse & Noisy Events under Non-Uniform Motion</h1>
+          <h1 class="title is-1 publication-title">Deblur <i>e-</i>NeRF: NeRF from Motion-Blurred Events under High-speed or Low-light Conditions</h1>
           
           <div class="is-size-5 publication-authors">
             <span class="author-block">
@@ -150,13 +150,13 @@
             <span class="author-block">National University of Singapore</span>
           </div>
 
-          <div class="is-size-5 publication-authors"><b>International Conference on Computer Vision (ICCV) 2023</b></div>
+          <div class="is-size-5 publication-authors"><b>European Conference on Computer Vision (ECCV) 2024</b></div>
 
           <div class="column has-text-centered">
             <div class="publication-links">
               <!-- arXiv Link. -->
               <span class="link-block">
-                <a href="https://arxiv.org/abs/2309.08596"
+                <a href="https://arxiv.org/abs/2409.17988"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="ai ai-arxiv"></i>
@@ -186,7 +186,7 @@
               </span> -->
               <!-- Code Link. -->
               <span class="link-block">
-                <a href="https://github.com/wengflow/robust-e-nerf"
+                <a href="https://github.com/wengflow/deblur-e-nerf"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="fab fa-github"></i>
@@ -206,7 +206,7 @@
               </span>
               <!-- Dataset Link. -->
               <span class="link-block">
-                <a href="https://huggingface.co/datasets/wengflow/robust-e-nerf"
+                <a href="https://huggingface.co/datasets/wengflow/deblur-e-nerf"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="fas fa-database"></i>
@@ -224,21 +224,9 @@
 
 <section class="hero teaser">
   <div class="container is-max-desktop has-text-centered">
-
-    <div class="columns is-centered">
-      <div class="column is-three-fifths p-4 has-text-centered">
-        <video id="comparison" autoplay muted loop playsinline>
-          <source src="./static/videos/comparison.mp4"
-                  type="video/mp4">
-        </video>
-      </div>
-      <div class="column is-two-fifths p-4 has-text-centered" style="border-left: 2px solid #f5f5f5;">
-        <video id="results" autoplay muted loop playsinline>
-          <source src="./static/videos/results (square).mp4"
-                  type="video/mp4">
-        </video>
-      </div>
-    </div>
+    <figure class="image">
+      <img src="./static/images/teaser-full.png">
+    </figure>
     <!-- <h2 class="subtitle has-text-centered">
       <span class="dnerf">Nerfies</span> turns selfie videos from your phone into
       free-viewpoint
@@ -270,29 +258,25 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-            Event cameras offer many advantages over standard cameras due to their distinctive principle 
-            of operation: low power, low latency, high temporal resolution and high dynamic range. 
-            Nonetheless, the success of many downstream visual applications also hinges on an efficient 
-            and effective scene representation, where Neural Radiance Field (NeRF) is seen as the leading candidate.
+            The distinctive design philosophy of event cameras makes them ideal for high-speed, high dynamic range and 
+            low-light environments, where standard cameras underperform. However, event cameras also suffer from motion blur, 
+            especially under these challenging conditions, contrary to what most think. This is due to the limited bandwidth of 
+            the event sensor pixel, which is mostly proportional to the light intensity.
           </p>
 
           <p>
-            Such promise and potential of event cameras and NeRF inspired recent works to investigate on 
-            the reconstruction of NeRF from moving event cameras. However, these works are mainly limited 
-            in terms of the dependence on dense and low-noise event streams, as well as generalization to 
-            arbitrary contrast threshold values and camera speed profiles.
+            Thus, to ensure event cameras can truly excel in such conditions where it has an edge over standard cameras, event 
+            motion blur must be accounted for in downstream tasks, especially reconstruction. However, no prior work on 
+            reconstructing Neural Radiance Fields (NeRFs) from events, nor event simulators, have considered the full effects of 
+            event motion blur. 
           </p>
 
           <p>
-            In this work, we propose Robust <i>e-</i>NeRF, a novel method to directly and robustly reconstruct 
-            NeRFs from moving event cameras under various real-world conditions, especially from sparse and 
-            noisy events generated under non-uniform motion. It consists of two key components: a realistic 
-            event generation model that accounts for various intrinsic parameters (<i>e.g.</i> time-independent, 
-            asymmetric threshold and refractory period) and non-idealities (<i>e.g.</i> pixel-to-pixel threshold 
-            variation), as well as a complementary pair of normalized reconstruction losses that can 
-            effectively generalize to arbitrary speed profiles and intrinsic parameter values without such 
-            prior knowledge. Experiments on real and novel realistically simulated sequences verify our effectiveness. Our 
-            code, synthetic dataset and improved event simulator are public.
+            To this end, we propose, Deblur e-NeRF, a novel method to directly and effectively reconstruct blur-minimal NeRFs from 
+            motion-blurred events, generated under high-speed or low-light conditions. The core component of this work is a 
+            physically-accurate pixel bandwidth model that accounts for event motion blur. We also introduce a threshold-normalized 
+            total variation loss to better regularize large textureless patches. Experiments on real and novel realistically 
+            simulated sequences verify our effectiveness. Our code, event simulator and synthetic event dataset are open-sourced.
           </p>
         </div>
       </div>
@@ -319,26 +303,12 @@
 <section class="section">
   <div class="container is-max-desktop">
 
-    <h2 class="title is-3">Event Generation Model</h2>
+    <h2 class="title is-3">Pixel Bandwidth Model</h2>
     <br>
     <div class="content is-centered has-text-justified">
       <figure class="image">
-        <img src="./static/images/egm.png" style="max-width: 400px">
+        <img src="./static/images/pbm-poster.png">
       </figure>
-
-      <p>
-        An event $\bm{e}$ of polarity $p$ is generated at timestamp $t_{\mathit{curr}}$ when the difference in log-radiance 
-        $\log L$ at a pixel $\bm{u}$, measured with respect to a reference $\log L$ at timestamp $t_{\mathit{ref}}$, has the 
-        same sign as $p$ and a magnitude that equals to the contrast threshold associated to polarity $p$, $C_p$. Red, 
-        downwards and blue, upwards arrows represent events of polarities $-1$ and $+1$, respectively, and each right-angled 
-        dashed line represents the measured change in $\log L$.
-      </p>
-      
-      <p>
-        After an event is generated, the pixel will be temporarily deactivated for an amount of time given by the refractory 
-        period $\tau$, as shaded in the figure. Thus, $t_{\mathit{ref}}$ is simply the sum of the previous event timestamp 
-        $t_{\mathit{prev}}$ and $\tau$.
-      </p>
     </div>
 
   </div>
@@ -348,35 +318,12 @@
 <section class="section"> -->
   <div class="container is-max-desktop">
 
-    <h2 class="title is-3">Training Pipeline</h2>
+    <h2 class="title is-3">Synthesis of Motion-Blurred Effective Log-Radiance</h2>
     <br>
     <div class="content is-centered has-text-justified">
       <figure class="image">
-        <img src="./static/images/overview.png">
+        <img src="./static/images/synthesis-poster.png">
       </figure>
-
-      <p>
-        For each event $\bm{e}$ in the batch $\mathcal{E}_{\mathit{batch}}$ sampled randomly from the event stream, we first 
-        derive the reference timestamp $t_{\mathit{ref}}$, given the refractory period $\tau$, and sample a timestamp 
-        $t_{\mathit{sam}}$ between $t_{\mathit{ref}}$ and $t_{\mathit{curr}}$. Next, we interpolate the given constant-rate 
-        camera poses at $t_{\mathit{ref}}, t_{\mathit{sam}}$ and $t_{\mathit{curr}}$ using LERP for position and SLERP for orientation. 
-      </p>
-        
-      <p>
-        Given these pose estimates $\hat{T}$, we then perform volume rendering on the back-projected rays from pixel $\bm{u}$ 
-        with the NeRF $F_\Theta$. This is done to infer the predicted radiance $\hat{L}$, and thus log-radiance $\log{\hat{L}}$, 
-        of pixel $\bm{u}$ at $t_{\mathit{ref}}, t_{\mathit{sam}}$ and $t_{\mathit{curr}}$. For brevity, we denote $\hat{L} 
-        (t) = \hat{L} (\bm{u}, t)$. 
-      </p>
-        
-      <p>
-        These $\log{\hat{L}}$ are ultimately used to derive the 
-        predicted log-radiance difference $\Delta \log \hat{L}$ and gradient $\frac{\partial}{\partial t} \log \hat{L} 
-        (t_{\mathit{sam}})$ for the computation of the reconstruction loss: threshold-normalized difference loss 
-        $\ell_{\mathit{diff}}$ and smoothness loss: target-normalized gradient loss $\ell_{\mathit{grad}}$, given the observed 
-        log-radiance difference $\Delta \log L$ and gradient $\frac{\partial}{\partial t} \log L (t_{\mathit{sam}})$ 
-        approximation from the event $\bm{e}$, respectively.
-      </p>
     </div>
 
   </div>
@@ -396,7 +343,7 @@
     </div>
 
     <br>
-    <h3 class="title is-4">Dense and Noise-Free Events under Uniform Motion</h3>
+    <h3 class="title is-4">Motion-Blurred Events under High Speed and Low Light</h3>
     <br>
     <div class="content is-centered has-text-centered">
 
@@ -404,62 +351,42 @@
         
         <div class="item">
           <figure class="image">
-            <img src="./static/images/easy/chair.png">
+            <img src="./static/images/hard/chair.png">
           </figure>
         </div>
         <div class="item">
           <figure class="image">
-            <img src="./static/images/easy/drums.png">
+            <img src="./static/images/hard/drums.png">
           </figure>
         </div>
         <div class="item">
           <figure class="image">
-            <img src="./static/images/easy/ficus.png">
+            <img src="./static/images/hard/ficus.png">
           </figure>
         </div>
         <div class="item">
           <figure class="image">
-            <img src="./static/images/easy/hotdog.png">
+            <img src="./static/images/hard/hotdog.png">
           </figure>
         </div>
         <div class="item">
           <figure class="image">
-            <img src="./static/images/easy/lego.png">
+            <img src="./static/images/hard/lego.png">
           </figure>
         </div>
         <div class="item">
           <figure class="image">
-            <img src="./static/images/easy/materials.png">
+            <img src="./static/images/hard/materials.png">
           </figure>
         </div>
         <div class="item">
           <figure class="image">
-            <img src="./static/images/easy/mic.png">
+            <img src="./static/images/hard/mic.png">
           </figure>
         </div>
 
       </div>
-
-      <br>
-      <p>
-        Robust <i>e-</i>NeRF also better reconstructs fine details and preserves color accuracy, especially at the background.
-      </p>
-    </div>
-
-    <br>
-    <h3 class="title is-4">Robustness to Temporal Event Sparsity</h3>
-    <br>
-    <div class="content is-centered has-text-justified">
-      <figure class="image">
-        <img src="./static/images/data_efficiency.png">
-      </figure>
-
-      <p>
-        Robust <i>e-</i>NeRF demonstrates astonishing robustness under severely sparse event streams, which suggests its high 
-        data efficiency. Notably, reasonable accuracy can still be achieved with $\tau = 1000 \mathit{ms}$, where each pixel 
-        can only generate at most 4 events throughout the $4000\mathit{ms}$ sequence and the event stream is around $200 \times$ 
-        sparser than that of $\tau = 0 \mathit{ms}$.
-      </p>
+  
     </div>
 
   </div>
@@ -472,9 +399,9 @@
   <div class="container is-max-desktop content has-text-justified">
     <h2 class="title is-3">Acknowledgements</h2>
     <p>
-      This research is supported by the National Research Foundation, Singapore under its 
-      AI Singapore Programme (AISG Award No: AISG2-RP-2021024), and the Tier 2 grant
-      MOE-T2EP20120-0011 from the Singapore Ministry of Education.
+      This research / project is supported by the National Research Foundation, Singapore, under its 
+      NRF-Investigatorship Programme (Award ID. NRF-NRFI09-0008), and the Tier 1 grant T1-251RES2305 
+      from the Singapore Ministry of Education.
     </p>
   </div>
   <!--/ Acknowledgements. -->
@@ -483,11 +410,11 @@
   <!-- BibTeX. -->
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
-    <pre><code>@inproceedings{low2023_robust-e-nerf,
-  title = {Robust e-NeRF: NeRF from Sparse & Noisy Events under Non-Uniform Motion},
+    <pre><code>@inproceedings{low2024_deblur-e-nerf,
+  title = {Deblur e-NeRF: NeRF from Motion-Blurred Events under High-speed or Low-light Conditions},
   author = {Low, Weng Fei and Lee, Gim Hee},
-  booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-  year = {2023}
+  booktitle = {European Conference on Computer Vision (ECCV)},
+  year = {2024}
 }</code></pre>
   </div>
   <!--/ BibTeX. -->

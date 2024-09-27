@@ -9,7 +9,7 @@ class ContrastThreshold(torch.nn.Module):
     POS_CONTRAST_THRESHOLD_KEY = "pos_contrast_threshold"
     NEG_CONTRAST_THRESHOLD_KEY = "neg_contrast_threshold"
 
-    def __init__(self, dataset_directory):
+    def __init__(self, dataset_directory, parameterize_mean_ct):
         super().__init__()
         camera_calibration = datasets.Event.load_camera_calibration(
             dataset_directory
@@ -24,10 +24,15 @@ class ContrastThreshold(torch.nn.Module):
             calibrated_pos_contrast_threshold
             / calibrated_neg_contrast_threshold
         )
+        calibrated_mean_contrast_threshold = (
+            calibrated_pos_contrast_threshold
+            + calibrated_neg_contrast_threshold
+        ) / 2
         assert calibrated_p2n_contrast_threshold_ratio > 0
+        assert calibrated_mean_contrast_threshold > 0
 
         # define calibrated positive-to-negative contrast threshold ratio &
-        # negative contrast threshold as buffer
+        # mean contrast threshold as buffer
         """
         NOTE:
             A value of 1 is an appropriate initialization for the positive-to
@@ -41,8 +46,8 @@ class ContrastThreshold(torch.nn.Module):
             persistent=False
         )
         self.register_buffer(
-            "neg_contrast_threshold",
-            calibrated_neg_contrast_threshold,
+            "init_mean_contrast_threshold",
+            calibrated_mean_contrast_threshold,
             persistent=False
         )
 
@@ -56,17 +61,46 @@ class ContrastThreshold(torch.nn.Module):
             self, "p2n_contrast_threshold_ratio", softplus
         )
 
+        # define mean contrast threshold parameter (must be > 0), if required.
+        # else, define negative contrast threshold as buffer (legacy support)
+        if parameterize_mean_ct:
+            ContrastThreshold.neg_contrast_threshold = property(
+                ContrastThreshold._neg_contrast_threshold_getter
+            )
+            self.mean_contrast_threshold = torch.nn.parameter.Parameter(
+                calibrated_mean_contrast_threshold
+            )
+            torch.nn.utils.parametrize.register_parametrization(
+                self, "mean_contrast_threshold", softplus
+            )
+        else:
+            self.register_buffer(
+                "neg_contrast_threshold",
+                calibrated_neg_contrast_threshold,
+                persistent=False
+            )
+            ContrastThreshold.mean_contrast_threshold = property(
+                ContrastThreshold._mean_contrast_threshold_getter
+            )
+
     @property
     def ref_p2n_contrast_threshold_ratio(self):
         return self.p2n_contrast_threshold_ratio \
                / self.init_p2n_contrast_threshold_ratio
 
     @property
+    def delta_mean_contrast_threshold(self):
+        return self.mean_contrast_threshold - self.init_mean_contrast_threshold
+
+    @property
     def pos_contrast_threshold(self):
         return self.p2n_contrast_threshold_ratio * self.neg_contrast_threshold
 
-    @property
-    def mean_contrast_threshold(self):
+    def _neg_contrast_threshold_getter(self):
+        return 2 * self.mean_contrast_threshold \
+               / (self.p2n_contrast_threshold_ratio + 1)
+
+    def _mean_contrast_threshold_getter(self):
         return (self.pos_contrast_threshold + self.neg_contrast_threshold) / 2
 
     def forward(self, input_event):

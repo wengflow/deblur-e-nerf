@@ -31,7 +31,7 @@ class LinearTrajectory(torch.nn.Module):
         """
         Args:
             input_timestamp (torch.Tensor):
-                Input timestamp(s) of shape (N) / () with dtype in the same
+                Input timestamp(s) of shape (...) with dtype in the same
                 units as `self.T_wc_timestamp` & contiguous
         Returns:
             input_T_wc_position (torch.Tensor):
@@ -41,17 +41,15 @@ class LinearTrajectory(torch.nn.Module):
                 Linearly interpolated orientation of camera poses associated to
                 the input timestamps
         """
-        assert input_timestamp.dim() <= 1
-
         # deduce the camera pose bins that input timestamps should fall into
         bin_left = easydict.EasyDict()
         bin_right = easydict.EasyDict()
 
-        bin_right.index = torch.searchsorted(                                   # ([N])
+        bin_right.index = torch.searchsorted(                                   # (...)
             sorted_sequence=self.T_wc_timestamp, input=input_timestamp
         )
-        is_corner_case = (input_timestamp == self.T_wc_timestamp[0])
-        bin_left.index = torch.where(
+        is_corner_case = (input_timestamp == self.T_wc_timestamp[0])            # (...)
+        bin_left.index = torch.where(                                           # (...)
             is_corner_case, bin_right.index, bin_right.index - 1
         )
         assert (
@@ -61,30 +59,31 @@ class LinearTrajectory(torch.nn.Module):
 
         # linearly interpolate camera positions
         weight = (input_timestamp - self.T_wc_timestamp[bin_left.index]) \
-                 / self.bin_width[bin_left.index]                               # ([N])
+                 / self.bin_width[bin_left.index]                               # (...)
         weight = weight.to(self.T_wc_position.dtype)
 
-        bin_left.T_wc_position = self.T_wc_position[bin_left.index, :]          # ([N,] 3)
-        bin_right.T_wc_position = self.T_wc_position[bin_right.index, :]        # ([N,] 3)
-        input_T_wc_position = torch.lerp(                                       # ([N,] 3) / (3)
+        bin_left.T_wc_position = self.T_wc_position[bin_left.index, :]          # (..., 3)
+        bin_right.T_wc_position = self.T_wc_position[bin_right.index, :]        # (..., 3)
+        input_T_wc_position = torch.lerp(                                       # (..., 3)
             input=bin_left.T_wc_position,
             end=bin_right.T_wc_position,
-            weight=weight.unsqueeze(dim=-1)                                     # ([N,] 1)
+            weight=weight.unsqueeze(dim=-1)                                     # (..., 1)
         )
 
         # apply slerp to interpolate orientation
-        bin_left.T_wc_orientation_quat = (                                      # ([N,] 4)
+        bin_left.T_wc_orientation_quat = (                                      # (..., 4)
             self.T_wc_orientation_quat[bin_left.index, :]
         )
-        bin_right.T_wc_orientation_quat = (                                     # ([N,] 4)
+        bin_right.T_wc_orientation_quat = (                                     # (..., 4)
             self.T_wc_orientation_quat[bin_right.index, :]
         )
-        input_T_wc_orientation_quat = tensor_ops.unitquat_slerp(                # ([N,] 4)
+
+        input_T_wc_orientation_quat = tensor_ops.unitquat_slerp(                # (..., 4)
             q0=bin_left.T_wc_orientation_quat,
             q1=bin_right.T_wc_orientation_quat,
             steps=weight, shortest_path=True
         )
-        input_T_wc_orientation = roma.unitquat_to_rotmat(                       # ([N,] 3, 3)
+        input_T_wc_orientation = roma.unitquat_to_rotmat(                       # (..., 3, 3)
             input_T_wc_orientation_quat
         )
 

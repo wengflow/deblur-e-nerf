@@ -12,6 +12,7 @@ class DataModule(pl.LightningDataModule):
         eval_target,
         num_nodes,
         gpus,
+        pixel_bandwidth,
         dataset_directory,
         train_dataset_ratio,
         val_dataset_ratio,
@@ -42,6 +43,7 @@ class DataModule(pl.LightningDataModule):
 
         # save some non-hyperparameter configs as attributes
         self.eval_target = eval_target
+        self.pixel_bandwidth = pixel_bandwidth
         self.dataset_directory = dataset_directory
         self.train_dataset_ratio = train_dataset_ratio
         self.val_dataset_ratio = val_dataset_ratio
@@ -147,25 +149,39 @@ class DataModule(pl.LightningDataModule):
         return dataset_subset
 
     def _build_normalized_sampler(self):
-        return utils.datasets.JoinDataset(
-            datasets=( self._build_normalized_ts_diff_sampler(),
-                       self._build_normalized_diff_start_ts_sampler(),
-                       self._build_normalized_grad_ts_sampler() ),
-            dataset_keys=( "ts_diff", "diff_start_ts", "grad_ts" )
-        )
+        datasets = [ self._build_normalized_ts_diff_sampler("dirac_delta"),
+                     self._build_normalized_diff_start_ts_sampler(),
+                     self._build_normalized_ts_diff_sampler("triangular"),
+                     self._build_normalized_diff_start_ts_sampler() ]
+        dataset_keys = [ "ts_diff", "diff_start_ts",
+                         "ts_subdiff", "subdiff_start_ts" ]
 
-    def _build_normalized_ts_diff_sampler(self):
+        if self.pixel_bandwidth.enable:
+            datasets.append(
+                self._build_normalized_interval_gen_sampler()
+            )
+            dataset_keys.append("interval_gen")
+        return utils.datasets.JoinDataset(datasets, dataset_keys)
+
+    def _build_normalized_ts_diff_sampler(self, ts_diff_dist):
         """
         Instantiate a normalized timestamp difference (i.e. interval) sampler,
         which is an iterable-style dataset, that yields unlimited batches of
         normalized timestamp difference samples with values in the range of
-        [0, 1] distributed according to the dirac-delta function, with
-        shape `(self.train_batch_size)`
+        [0, 1] distributed according to `ts_diff_dist`, with shape
+        `(self.train_batch_size)`
         """
-        sampler = samplers.DiracDeltaSampler(
-            center=1, size=self.train_batch_size,
-            dtype=torch.float64
-        )
+        sampler = {
+            "triangular": samplers.TriangularSampler(
+                            low=0, high=1, size=self.train_batch_size,
+                            mode=0, dtype=torch.float64,
+                            generator=self.train_generator
+                          ),
+            "dirac_delta": samplers.DiracDeltaSampler(
+                               center=1, size=self.train_batch_size,
+                               dtype=torch.float64
+                           )
+        }[ts_diff_dist]
         return sampler
 
     def _build_normalized_diff_start_ts_sampler(self):
@@ -179,19 +195,20 @@ class DataModule(pl.LightningDataModule):
             low=0, high=1, size=self.train_batch_size, dtype=torch.float64,
             generator=self.train_generator
         )
-
-    def _build_normalized_grad_ts_sampler(self):
+    
+    def _build_normalized_interval_gen_sampler(self):
         """
-        Instantiate a normalized gradient timestamp sampler, which is an
-        iterable-style dataset, that yields unlimited batches of normalized
-        gradient timestamp samples with values in the range of [0, 1]
-        distributed according to a truncated normal, with shape
-        `(self.train_batch_size)`
+        Instantiate a normalized sample (timestamp / lifetime) interval
+        generator sampler, which is an iterable-style dataset, that yields
+        unlimited batches of normalized interval generator samples with values
+        in the range of [0, 1] distributed according to the dirac-delta
+        function, with shape
+        `(self.pixel_bandwidth.it_sample_size - 1, self.train_batch_size)`.
         """
-        sampler = samplers.TruncatedNormalSampler(
-            low=0, high=1, size=self.train_batch_size,
-            mean=0.5, std=0.25, dtype=torch.float64,                            # [0, 1] is within 2 * std
-            generator=self.train_generator
+        size = ( self.pixel_bandwidth.it_sample_size - 1,
+                 self.train_batch_size )
+        sampler = samplers.DiracDeltaSampler(
+            center=0.5, size=size, dtype=torch.float64
         )
         return sampler
 

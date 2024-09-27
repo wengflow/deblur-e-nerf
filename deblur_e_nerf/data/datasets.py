@@ -388,6 +388,8 @@ class PosedImage(torch.utils.data.Dataset):
     BIT_DEPTH_KEY = "bit_depth"
     IMG_METADATA_KEY = "frames"
     IMG_PATH_KEY = "file_path"
+    IMG_EXPOSURE_TIME_KEY = "exposure_time"
+    IMG_GAIN_KEY = "gain"
     IMG_POSE_KEY = "transform_matrix"
 
     RENDERER_PARAMS_FILENAME = "renderer_params.npz"
@@ -466,7 +468,8 @@ class PosedImage(torch.utils.data.Dataset):
 
     @classmethod
     def load_posed_imgs(cls, root_directory, stage_transforms):
-        # load the images & extract the camera extrinsics / poses of each image
+        # load the images & extract the ID, camera intrinsics, extrinsics
+        # / poses, exposure time & gain of each image
         posed_imgs = easydict.EasyDict({
             "sample_id": [],
             "img": [],
@@ -474,7 +477,14 @@ class PosedImage(torch.utils.data.Dataset):
             "T_wc_orientation": [],
             "intrinsics": None
         })
-        for img_metadata in stage_transforms[cls.IMG_METADATA_KEY]:
+        image_metadatas = stage_transforms[cls.IMG_METADATA_KEY]
+        if len(image_metadatas) > 0:
+            if cls.IMG_EXPOSURE_TIME_KEY in image_metadatas[0].keys():
+                posed_imgs.exposure_time = []
+            if cls.IMG_GAIN_KEY in image_metadatas[0].keys():
+                posed_imgs.gain = []
+
+        for img_metadata in image_metadatas:
             sample_id = os.path.basename(img_metadata[cls.IMG_PATH_KEY])
 
             # normalize the sample id to `cls.NORMALIZED_SAMPLE_ID_CHAR_LEN`
@@ -501,6 +511,13 @@ class PosedImage(torch.utils.data.Dataset):
             T_wc = np.array(img_metadata[cls.IMG_POSE_KEY])                     # (4, 4)
             posed_imgs.T_wc_position.append(T_wc[:3, 3])                        # (3)
             posed_imgs.T_wc_orientation.append(T_wc[:3, :3])                    # (3, 3)
+
+            if cls.IMG_EXPOSURE_TIME_KEY in img_metadata.keys():
+                posed_imgs.exposure_time.append(
+                    img_metadata[cls.IMG_EXPOSURE_TIME_KEY]
+                )
+            if cls.IMG_GAIN_KEY in img_metadata.keys():
+                posed_imgs.gain.append(img_metadata[cls.IMG_GAIN_KEY])
             
         # cast the relevant posed image components to `numpy.ndarray`
         for key, value in posed_imgs.items():
@@ -672,10 +689,15 @@ class PosedImage(torch.utils.data.Dataset):
         posed_imgs.T_wc_orientation = T_w_copengl_orientation \
                                       @ cls.T_COPENGL_CCOMMON_ORIENTATION
         
-        # cast the camera poses to `torch.Tensor`
+        # cast camera intrinsics, poses, exposure time & gain to `torch.Tensor`
         for key in ( "T_wc_position", "T_wc_orientation", "intrinsics" ):
             posed_imgs[key] = torch.tensor(posed_imgs[key],
                                            dtype=torch.get_default_dtype())
+        if  "gain" in posed_imgs.keys():
+            posed_imgs.gain = torch.tensor(posed_imgs.gain,
+                                           dtype=torch.get_default_dtype())
+        if "exposure_time" in posed_imgs.keys():
+            posed_imgs.exposure_time = torch.tensor(posed_imgs.exposure_time)
 
         return posed_imgs
 

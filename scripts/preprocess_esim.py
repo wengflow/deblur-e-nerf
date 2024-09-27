@@ -12,6 +12,10 @@ INTERM_COLOR_SPACE_ID_TO_NAME = {
 }
 BAYER_PATTERN = "RGGB"
 NULL_BAYER_PATTERN = ""     # ie. monochrome camera
+FROM_MILLI = 1e-3
+FROM_MICRO = 1e-6
+FROM_FEMTO = 1e-9
+
 TOPICS = [ "/cam0/events", "/cam0/pose", "/cam0/camera_info", "/imu" ]
 EVENTS_FILENAME = "raw_events.npz"
 CAMERA_POSES_FILENAME = "camera_poses.npz"
@@ -23,11 +27,12 @@ GAUSSIAN_BLUR_KSIZE = np.array([21, 21])
 absl.flags.DEFINE_integer("renderer_type", 0,
                           ("0: Planar renderer, 1: Panorama renderer, "
                            "2: OpenGL renderer, 3: UnrealCV renderer"))
-absl.flags.DEFINE_string("renderer_texture", "", "Path to image which will"
-                         " be used to texture the plane")
+absl.flags.DEFINE_string("renderer_texture", "",
+                         ("Path to image which will be used to texture the"
+                          " plane"))
 absl.flags.DEFINE_float("renderer_hfov_cam_source_deg", 130.0,
-                        "Horizontal FoV of the source camera (that captured"
-                        " the image on the plane)")
+                        ("Horizontal FoV of the source camera (that captured"
+                         " the image on the plane)"))
 absl.flags.DEFINE_integer("renderer_preprocess_median_blur", 0,
                           "Kernel size of the preprocessing median blur.")
 absl.flags.DEFINE_float("renderer_preprocess_gaussian_blur", 0,
@@ -55,8 +60,8 @@ absl.flags.DEFINE_float("renderer_plane_qz", 0.0,
                          " the plane with respect to the world)"))
 
 absl.flags.DEFINE_integer("blender_interm_color_space", 0,
-                          "Color space of the intermediate output RGBA image."
-                          " 0: Display (Filmic sRGB by default), 1: Linear.")
+                          ("Color space of the intermediate output RGBA image."
+                           " 0: Display (Filmic sRGB by default), 1: Linear."))
 
 absl.flags.DEFINE_float("contrast_threshold_pos", 1.0,
                         "Contrast threshold (positive)")
@@ -66,6 +71,59 @@ absl.flags.DEFINE_integer("refractory_period_ns", 0,
                           ("Refractory period (time during which a pixel"
                            " cannot fire events just after it fired one), in"
                            " nanoseconds"))
+
+absl.flags.DEFINE_float("I_p_to_intensity_ratio_fa", float("inf"),
+                        ("Ratio of the signal photocurrent `I_p`, in fA, to"
+                         " image pixel intensity `it`, `I_p_to_it_ratio`"))
+absl.flags.DEFINE_float("dark_current_fa", 0.0,
+                        ("Photodiode dark current `I_dark`, in fA. The"
+                         " photocurrent `I = I_p + I_dark`. When"
+                         " `I_p_to_it_ratio` approaches infinity, then"
+                         " `I_dark` is effectively 0 / dark current-equivalent"
+                         " image pixel intensity (i.e. black level)"
+                         " `black_level = I_dark / I_p_to_it_ratio` is 0."))
+absl.flags.DEFINE_float("amplifier_gain", float("inf"),
+                        "Amplifier gain of the photoreceptor circuit `A_amp`")
+absl.flags.DEFINE_float("back_gate_coeff", 0.7,
+                        ("Back-gate coefficient `kappa`. The closed-loop gain"
+                         " of the photoreceptor circuit `A_cl = 1 / kappa`,"
+                         " and the total loop gain of the photoreceptor"
+                         " circuit `A_loop = A_amp / A_cl`."))
+absl.flags.DEFINE_float("thermal_voltage_mv", 25,
+                        "Thermal voltage `V_T`, in mV")
+absl.flags.DEFINE_float("photodiode_cap_ff", 0.0,
+                        ("(Lumped) Parasitic capacitance on the photodiode"
+                         " / input node of the photoreceptor circuit `C_p`, in"
+                         " fF. The time constant associated to the input node"
+                         " of the photoreceptor circuit"
+                         " `tau_in = C_p * V_T / I = Q_in / I`."))
+absl.flags.DEFINE_float("miller_cap_ff", 0.0,
+                        ("Miller capacitance in the photoreceptor circuit"
+                         " `C_mil`, in fF. In the absence of a cascode"
+                         " transistor, `C_mil = C_fb + C_n`, where `C_fb` is"
+                         " the Miller capacitance from the gate to the source"
+                         " of the feedback transistor M_fb, and `C_n` is the"
+                         " Miller capacitance from the gate to the drain of"
+                         " the inverting amplifier transistor M_n. Else,"
+                         " `C_mil = C_fb`. The time constant associated to the"
+                         " Miller capacitance `tau_mil = C_mil * V_T / I"
+                         " = Q_mil / I`."))
+absl.flags.DEFINE_float("output_time_const_us", 0.0,
+                        ("Time constant `tau_out` associated to the output"
+                         " node of the photoreceptor circuit / photoreceptor"
+                         " bias current `I_pr`, in microseconds"))
+absl.flags.DEFINE_float("lower_cutoff_freq_hz", 0.0,
+                        ("Lower cutoff frequency of the pixel circuit / high"
+                         "-pass filter present in certain event cameras"
+                         " `f_c_lower`, in Hz"))
+absl.flags.DEFINE_float("sf_cutoff_freq_hz", float("inf"),
+                        ("(Upper) Cutoff frequency of the source follower"
+                         " buffer `f_c_sf`, associated to the source follower"
+                         " buffer bias current `I_sf`, in Hz"))
+absl.flags.DEFINE_float("diff_amp_cutoff_freq_hz", float("inf"),
+                        ("(Upper) Cutoff frequency of the differencing/change"
+                         " amplifier `f_c_diff`, in Hz"))
+
 absl.flags.DEFINE_float("log_eps", 0.001,
                         ("Epsilon value used to convert images"
                          " to log: L = log(eps + I / 255.0)."))
@@ -75,12 +133,18 @@ absl.flags.DEFINE_bool("simulate_color_events", False,
 
 def main(args):
     pos_contrast_threshold, neg_contrast_threshold, \
-    refractory_period, bayer_pattern = preprocess_conf(
+    refractory_period, bayer_pattern, input_time_const_eff_it_prod, \
+    miller_time_const_eff_it_prod, black_level, amplifier_gain, \
+    closed_loop_gain, output_time_const, lower_cutoff_freq, sf_cutoff_freq, \
+    diff_amp_cutoff_freq = preprocess_conf(
         args.conf_path, args.dataset_path
     )
     preprocess_rosbag(
         args.rosbag_path, args.dataset_path, pos_contrast_threshold,
-        neg_contrast_threshold, refractory_period, bayer_pattern
+        neg_contrast_threshold, refractory_period, bayer_pattern,
+        input_time_const_eff_it_prod, miller_time_const_eff_it_prod,
+        black_level, amplifier_gain, closed_loop_gain, output_time_const,
+        lower_cutoff_freq, sf_cutoff_freq, diff_amp_cutoff_freq
     )
 
 
@@ -153,11 +217,42 @@ def preprocess_conf(conf_path, dataset_path):
     refractory_period = np.array(FLAGS.refractory_period_ns)
     if FLAGS.simulate_color_events:
         bayer_pattern = BAYER_PATTERN
+        intensity_shape = 3
     else:
         bayer_pattern = NULL_BAYER_PATTERN
+        intensity_shape = 1
+
+    # `tau_in * it_eff = C_p * V_T / I_p_to_it_ratio`
+    input_time_const_eff_it_prod = np.array(
+        FLAGS.photodiode_cap_ff * (FROM_MILLI * FLAGS.thermal_voltage_mv)
+        / FLAGS.I_p_to_intensity_ratio_fa,
+        dtype=np.float32
+    )
+    # `tau_mil * it_eff = C_mil * V_T / I_p_to_it_ratio`
+    miller_time_const_eff_it_prod = np.array(
+        FLAGS.miller_cap_ff * (FROM_MILLI * FLAGS.thermal_voltage_mv)
+        / FLAGS.I_p_to_intensity_ratio_fa,
+        dtype=np.float32
+    )
+    black_level = np.full(
+        intensity_shape,
+        FLAGS.dark_current_fa / FLAGS.I_p_to_intensity_ratio_fa,
+        dtype=np.float32
+    )
+    amplifier_gain = np.array(FLAGS.amplifier_gain, dtype=np.float32)
+    closed_loop_gain = np.array(1 / FLAGS.back_gate_coeff, dtype=np.float32)
+    output_time_const = np.array(FROM_MICRO * FLAGS.output_time_const_us,
+                                 dtype=np.float32)
+    lower_cutoff_freq = np.array(FLAGS.lower_cutoff_freq_hz, dtype=np.float32)
+    sf_cutoff_freq = np.array(FLAGS.sf_cutoff_freq_hz, dtype=np.float32)
+    diff_amp_cutoff_freq = np.array(FLAGS.diff_amp_cutoff_freq_hz,
+                                    dtype=np.float32)
 
     return pos_contrast_threshold, neg_contrast_threshold, \
-           refractory_period, bayer_pattern
+           refractory_period, bayer_pattern, input_time_const_eff_it_prod, \
+           miller_time_const_eff_it_prod, black_level, amplifier_gain, \
+           closed_loop_gain, output_time_const, lower_cutoff_freq, \
+           sf_cutoff_freq, diff_amp_cutoff_freq
 
 
 def preprocess_rosbag(
@@ -166,7 +261,16 @@ def preprocess_rosbag(
     pos_contrast_threshold,
     neg_contrast_threshold,
     refractory_period,
-    bayer_pattern
+    bayer_pattern,
+    input_time_const_eff_it_prod,
+    miller_time_const_eff_it_prod,
+    black_level,
+    amplifier_gain,
+    closed_loop_gain,
+    output_time_const,
+    lower_cutoff_freq,
+    sf_cutoff_freq,
+    diff_amp_cutoff_freq
 ):
     # read rosbag
     bag = rosbag.Bag(rosbag_path)
@@ -255,7 +359,16 @@ def preprocess_rosbag(
         pos_contrast_threshold=pos_contrast_threshold,
         neg_contrast_threshold=neg_contrast_threshold,
         refractory_period=refractory_period,
-        bayer_pattern=bayer_pattern
+        bayer_pattern=bayer_pattern,
+        input_time_const_eff_it_prod=input_time_const_eff_it_prod,
+        miller_time_const_eff_it_prod=miller_time_const_eff_it_prod,
+        black_level=black_level,
+        amplifier_gain=amplifier_gain,
+        closed_loop_gain=closed_loop_gain,
+        output_time_const=output_time_const,
+        lower_cutoff_freq=lower_cutoff_freq,
+        sf_cutoff_freq=sf_cutoff_freq,
+        diff_amp_cutoff_freq=diff_amp_cutoff_freq
     )
     print("Done!")
     

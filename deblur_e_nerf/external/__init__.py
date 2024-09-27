@@ -1,1 +1,1 @@
-from . import mlp, ngp, sh_encoder, utils, vol_rendering
+from . import mlp, ngp, optimizer, sh_encoder, utils, vol_rendering

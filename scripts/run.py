@@ -40,6 +40,7 @@ def main(args):
         config.eval_target,
         config.trainer.num_nodes,
         config.trainer.gpus,
+        config.model.pixel_bandwidth,
         **config.data
     )
     model = den.models.deblur_e_nerf.DeblurENeRF(
@@ -52,7 +53,9 @@ def main(args):
         config.model.checkpoint_filepath,
         config.model.contrast_threshold,
         config.model.refractory_period,
+        config.model.pixel_bandwidth,
         config.model.nerf,
+        config.model.correction,
         config.loss,
         config.metric,
         config.optimizer,

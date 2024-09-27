@@ -4,7 +4,7 @@ float32_matmul_precision: highest           #     { highest, high, medium }
 eval_target: [ novel_view ]                 #     { [ event_view ], [ novel_view ] }
 
 data:
-  dataset_directory: /data/wflow/datasets/robust-e-nerf/ficus/easy
+  dataset_directory: /data/wflow/datasets/deblur-e-nerf/chair/hard
   train_dataset_ratio: 1.0                  #     { <int> (number of train effective batches),
                                             #       [0.0, 1.0] (fraction of train dataset) }
   val_dataset_ratio: 1.0                    #     { <int> (number of validation effective batches),
@@ -15,8 +15,8 @@ data:
   eval_dataset_perm_seed:                   #     { <empty> (no permutation), <int> }
 
   alpha_over_white_bg: true                 # [H] { false, true }
-  train_init_eff_batch_size: 1024           # [H] multiple of total number of gpus across all nodes
-  train_eff_ray_sample_batch_size: 1048576  # [H] multiple of total number of gpus across all nodes
+  train_init_eff_batch_size: 256            # [H] multiple of total number of gpus across all nodes
+  train_eff_ray_sample_batch_size: 131072   # [H] multiple of total number of gpus across all nodes
   val_eff_batch_size: 1                     #     multiple of total number of gpus across all nodes
   test_eff_batch_size: 1                    #     multiple of total number of gpus across all nodes
   num_workers_per_node: 0                   #     multiple of number of gpus per node
@@ -25,15 +25,34 @@ model:
   min_modeled_intensity: 0.001              # [H] should not be too small, else the log intensity gradients will
                                             #     be too large for small intensities
   eval_save_pred_intensity_img: true        #     { false, true }
-  checkpoint_filepath: /data/wflow/dev/robust-e-nerf/logs/train/synthetic/ficus/easy/log_intensity_grad=0/version_0/checkpoints/epoch=39-step=39999.ckpt  # [H] { <empty>, <str> }
+  checkpoint_filepath: /data/wflow/dev/deblur-e-nerf/logs/train/synthetic/chair/hard/version_0/checkpoints/epoch=39-step=39999.ckpt  # [H] { <empty>, <str> }
 
   # model-component configs
   contrast_threshold:
+    parameterize_mean_ct: true              # [H]
     load_state_dict: true                   # [H] { false, true (`model.checkpoint_filepath` must not be empty) }
-    freeze: true                            # [H] { false, true }
+    freeze:                                 # [H] { false (all parameters), true (all parameters), name-freeze dict (per-parameter/default) }
+      p2n_contrast_threshold_ratio: true    # [H] { false, true }
+      mean_contrast_threshold: true         # [H] { false, true }, only applicable if `contrast_threshold.parameterize_mean_ct` is true
+      default: true                         # [H] { false, true }
   refractory_period:
     load_state_dict: true                   # [H] { false, true (`model.checkpoint_filepath` must not be empty) }
     freeze: true                            # [H] { false, true }
+  pixel_bandwidth:
+    enable: true                            # [H] { false, true }
+    it_sample_size: 30                      # [H]
+    f_c_dominant_min: 21                    # [H] represented in Hz
+    target_cumprob:
+      max_sample_lifetime: 0.95             # [H]
+    load_state_dict: true                   # [H] { false, true (`model.checkpoint_filepath` must not be empty) }
+    freeze:                                 # [H] { false (all parameters), true (all parameters), name-freeze dict (per-parameter/default) }
+      tau_mil_it_eff_prod: true             # [H] { false, true }
+      A_amp_inv: true                       # [H] { false, true }
+      A_loop_inv: true                      # [H] { false, true }
+      tau_out: true                         # [H] { false, true }
+      tau_sf: true                          # [H] { false, true }
+      tau_diff: true                        # [H] { false, true }
+      default: true                         # [H] { false, true }
   nerf:
     aabb: [ -1.5, -1.5, -1.5,               # [H] { <list of min-max coordinates>, auto }
              1.5,  1.5,  1.5  ]
@@ -44,8 +63,8 @@ model:
       ema_decay: 0.95                       # [H]
       warmup_steps: 256                     # [H]
       n: 16                                 # [H]
-    near_plane:                             # [H] { <empty> (none), <float> }
-    far_plane:                              # [H] { <empty> (none), <float> }
+    near_plane: 1.43                        # [H] { <empty> (none), <float> }
+    far_plane: 6.63                         # [H] { <empty> (none), <float> }
     render_step_size: auto                  # [H] { <float> (manual), auto (derived with max. 1024 samples per ray 
                                             #       within the bounding square AABB) }
     cone_angle: 0                           # [H]
@@ -94,18 +113,30 @@ model:
       pos_encoder_max_deg: 10               # [H]
       view_encoder_max_deg: 4               # [H]
       weight_norm: false                    # [H]
+  correction:
+    per_channel_log_it_scale: false         #     { false, true (no effect when the camera is monochrome) }
+    black_level_offset: true                #     { false, true }
+
+    # only applicable if `black_level_offset` is true
+    optimizer:
+      algo: lm                              #     { gn, lm }
+      max_steps: 20                         #
+
+      # algorithm-dependent configs
+      lm:
+        radius: 1.0e+6                      #
 
 loss:
   error_fn:
-    log_intensity_grad: mape                # [H] { l1, mse, mape }
-    log_intensity_diff: mse                 # [H] { l1, mse, mape }
+    log_intensity_diff: huber               # [H] { l1, mse, huber (delta=1.0), mape }
+    log_intensity_tv: l1                    # [H] { l1, mse, huber (delta=1.0), mape }
   weight:
-    log_intensity_grad: 0.0e-3              # [H]
     log_intensity_diff: 1.0                 # [H]
+    log_intensity_tv: 1.0e-3                # [H]
     nerf_mlp_weight_decay: 1.0e-6           # [H]
-  param_weight:
-    log_intensity_grad:                     # [H] { <empty>, mean_contrast_reciprocal, mean_contrast_reciprocal_sq }
-    log_intensity_diff: mean_contrast_reciprocal_sq # [H] { <empty>, mean_contrast_reciprocal, mean_contrast_reciprocal_sq }
+  normalize:
+    log_intensity_diff: true                # [H] { false, true }
+    log_intensity_tv: true                  # [H] { false, true }
 
 metric:
   lpips_net: "alex"                         #     { alex, vgg, squeeze }
@@ -113,7 +144,16 @@ metric:
 optimizer:
   algo: adam                                # [H] { adam }
   lr:
-    contrast_threshold: 0.1                 # [H]
+    contrast_threshold:                     # [H]
+      p2n_contrast_threshold_ratio: 0.1     # [H]
+      mean_contrast_threshold: 0.1          # [H] only applicable if `model.contrast_threshold.parameterize_mean_ct` is true
+    pixel_bandwidth:                        #     only applicable if `model.pixel_bandwidth.enable` is true
+      tau_mil_it_eff_prod: 0.01             # [H]
+      A_amp_inv: 0.01                       # [H]
+      A_loop_inv: 0.01                      # [H]
+      tau_out: 0.01                         # [H]
+      tau_sf: 0.01                          # [H]
+      tau_diff: 0.01                        # [H]
     default: 0.01                           # [H]
   relative_lr:
     refractory_period: 50                   # [H]
@@ -128,8 +168,8 @@ lr_scheduler:
     gamma: 0.33                             # [H]
 
 logger:
-  save_dir: /data/wflow/dev/robust-e-nerf/logs
-  name: "test/synthetic/ficus/easy/log_intensity_grad=0"
+  save_dir: /data/wflow/dev/deblur-e-nerf/logs
+  name: "test/synthetic/chair/hard/log_intensity_tv=1e-3"
   version:
 
 checkpoint:

@@ -1,1 +1,1 @@
-from . import autograd, datasets, modules, tensor_ops
+from . import autograd, control, datasets, modules, tensor_ops

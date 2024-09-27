@@ -17,6 +17,10 @@ def bool_mean(bool_tensor):
     return bool_tensor.to(torch.get_default_dtype()).mean()
 
 
+def mean(iterable):
+    return sum(iterable) / len(iterable)
+
+
 def lerp_uniform(input, upsampling_factor):
     """
     Args:

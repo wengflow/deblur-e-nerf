@@ -35,6 +35,26 @@ def extract_descendent_state_dict(state_dict, descendent_name):
     return descendent_state_dict
 
 
+def detach_clone_named_parameters(module):
+    return (
+        (name, param.detach().clone())
+        for name, param in module.named_parameters()
+    )
+
+
+def named_parameters_allclose(module, other_named_parameters):
+    module_named_parameters = dict(module.named_parameters())
+    other_named_parameters = dict(other_named_parameters)
+    assert module_named_parameters.keys() == other_named_parameters.keys()
+
+    allclose = True
+    for key in module_named_parameters.keys():
+        allclose = allclose and torch.allclose(
+            module_named_parameters[key], other_named_parameters[key]
+        )
+    return allclose
+
+
 class Softplus(torch.nn.Module):
     def __init__(self, beta=1, threshold=20):
         super().__init__()
